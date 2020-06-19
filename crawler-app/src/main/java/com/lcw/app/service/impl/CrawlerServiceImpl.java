@@ -66,39 +66,64 @@ public class CrawlerServiceImpl implements CrawlerService {
      */
     public CommentsInfo requestComments(Integer avNumber){
         // 外接do while循环,直到没有新的页面为止
-
-        // 请求
-        String reqUrl = "https://api.bilibili.com/x/v2/reply?&type=1&pn=1&oid="+avNumber;
-        String json = OkHttpUtils.httpGet(reqUrl);
-        // 转换为JsonObject
-        JsonObject obj = (JsonObject) new JsonParser().parse(json);
-        // 获取JsonObj下的dataObj 0
-        JsonObject dataObj = obj.get("data").getAsJsonObject();
-        // 获取dataObj下的pageObj 1
-        JsonObject pageObj = dataObj.get("page").getAsJsonObject();
-        // 获取dataObj下的repliesArrayObj 1
-        JsonArray repliesArray = dataObj.get("replies").getAsJsonArray();
-        // replies数组下的每个Obj 1 0
-        JsonObject replayObj ;
-        // 每个回复Id下的点赞数量
-        //TODO 这里的Value应该是一个实体类
-        List<Map<Long,Long>> likes = new ArrayList<>();
-        // 点赞Map
-        Map<Long,Long> likeMap = new HashMap<>();
-        // 遍历repliesArray
-        for (JsonElement object:repliesArray) {
-            replayObj = object.getAsJsonObject();
-            likeMap.put(replayObj.get("rpid").getAsLong(),replayObj.get("like").getAsLong());
-            likes.add(likeMap);
-        }
-        // 求出到当前页的点赞数最多的评论，以及评论内容
-        List<Long> filterList=
-        likes.stream()
-                .flatMap(map -> map.values().stream().filter(m -> m > 0))//压平的时候就把为0的数据剔除
-                .collect(Collectors.toList());//过滤掉没有点赞的评论Id
-        System.out.println(filterList);
-
-        System.out.println(likes);
+        JsonObject pageObj;
+        int pageNum = 1;
+        do {
+            String reqUrl = "https://api.bilibili.com/x/v2/reply?&type=1"+"&pn="+pageNum+"&oid="+avNumber;
+            // 请求
+            String json = OkHttpUtils.httpGet(reqUrl);
+            // 转换为JsonObject
+            JsonObject obj = (JsonObject) new JsonParser().parse(json);
+            // 获取JsonObj下的dataObj 0
+            JsonObject dataObj = obj.get("data").getAsJsonObject();
+            // 获取dataObj下的pageObj 1
+            pageObj = dataObj.get("page").getAsJsonObject();
+            // 获取dataObj下的repliesArrayObj 1
+            JsonArray repliesArray = null;
+            JsonArray hotsArray = null;
+            try{
+                // 如果 repliesArray 是null 那就去解析热评中的数据
+                if(!dataObj.get("replies").isJsonNull()){
+                    repliesArray = dataObj.get("replies").getAsJsonArray();
+                    // replies数组下的每个Obj 1 0
+                    JsonObject replayObj ;
+                    // 每个回复Id下的点赞数量
+                    //TODO 这里的Value应该是一个实体类
+                    List<Map<Long,Long>> likes = new ArrayList<>();
+                    // 点赞Map
+                    Map<Long,Long> likeMap = new HashMap<>();
+                    // 遍历repliesArray
+                    for (JsonElement object:repliesArray) {
+                        replayObj = object.getAsJsonObject();
+                        likeMap.put(replayObj.get("rpid").getAsLong(),replayObj.get("like").getAsLong());
+                        likes.add(likeMap);
+                    }
+                    // 求出到当前页的点赞数最多的评论，以及评论内容
+                    List<Long> filterList=
+                            likes.stream()
+                                    .flatMap(map -> map.values().stream().filter(m -> m > 0))//压平的时候就把为0的数据剔除
+                                    .collect(Collectors.toList());//过滤掉没有点赞的评论Id
+                    System.out.println("普通评论"+filterList);
+                    System.out.println(likes);
+                }
+                // 解析热评数据
+                if(!dataObj.get("hots").isJsonNull()) {
+                    hotsArray = dataObj.get("hots").getAsJsonArray();
+                    for (JsonElement el : hotsArray) {
+                        JsonArray replyArray = el.getAsJsonArray();
+                        for (JsonElement ele:replyArray) {
+                            JsonObject replayObj= ele.getAsJsonObject();
+                            System.out.println(replayObj.get("rpid").getAsLong());
+                        }
+                    }
+                }
+            }catch (Exception e){
+                //TODO 未知异常
+                System.out.println("当前页码的replies,Json对象为空");
+            }
+            pageNum ++;
+            System.out.println("当前页码数:"+ pageNum);
+        } while (pageObj.get("count").getAsLong() >= pageNum);
 
 
         return null;
