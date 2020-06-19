@@ -1,0 +1,33 @@
+#服务端口
+server:
+  port: 8911
+  tomcat:
+    max-connections: 200 #最大连接数
+    max-threads: 200 #最大线程数
+    min-spare-threads: 0 #备用线程
+    uri-encoding: UTF-8 #字符集
+
+
+spring:
+  application:
+    name: crawler-eureka
+
+
+#Eureka相关
+eureka:
+  instance:
+    hostname: localhost #主机名
+    lease-renewal-interval-in-seconds: 5 #client给server发送心跳信息的频率
+  client:
+    #关闭eureka的客户端注册
+    register-with-eureka: false
+    fetch-registry: false
+    serverUrl:
+      #eureka注册中心地址，可配置多个形成Eureka注册中心集群
+      defultZone: http://localhost:${server.port}/eureka
+
+  server:
+    #关闭自我保护机制，防止失效的服务一直被访问,默认配置为true
+    enable-self-preservation: true
+    #每隔10s扫描服务列表
+    eviction-interval-timer-in-ms: 5000
