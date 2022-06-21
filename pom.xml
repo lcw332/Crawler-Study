@@ -68,7 +68,7 @@
         <akka.version>2.6.5</akka.version>
         <spring-data-cassandra.version>3.0.0.RELEASE</spring-data-cassandra.version>
         <spring-data-jpa.version>2.2.2.RELEASE</spring-data-jpa.version>
-        <mysql-connector.version>8.0.18</mysql-connector.version>
+        <mysql-connector.version>8.0.28</mysql-connector.version>
         <netty.version>4.1.48.Final</netty.version>
         <rxjava.version>2.2.19</rxjava.version>
         <swagger.version>2.9.2</swagger.version>
